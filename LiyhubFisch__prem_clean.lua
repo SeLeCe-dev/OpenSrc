@@ -22,8 +22,17 @@ function Window:Notify(cfg)
         })
     end)
 end
-local function adaptSection(sec)
+local function adaptSection(tab, sectionTitle)
+    local sec = {}
+    local realSec = nil
+    local function getSec()
+        if not realSec then
+            realSec = tab:Section({ Title = sectionTitle, Opened = true })
+        end
+        return realSec
+    end
     function sec:AddToggle(opts, arg2, arg3, arg4)
+        local target = getSec()
         local title, desc, defaultVal, callback
         if type(opts) == "string" then
             title = opts
@@ -38,7 +47,7 @@ local function adaptSection(sec)
             title, defaultVal, callback = "Toggle", false, function() end
         end
         local handle
-        handle = sec:Toggle({
+        handle = target:Toggle({
             Title = title,
             Desc = desc,
             Value = defaultVal == true,
@@ -64,6 +73,7 @@ local function adaptSection(sec)
         return handle
     end
     function sec:AddDropdown(opts, arg2, arg3, arg4)
+        local target = getSec()
         local title, desc, rawItems, isMulti, defaultVal, callback
         if type(opts) == "string" then
             title = opts
@@ -159,7 +169,7 @@ local function adaptSection(sec)
             windDefault = rawItems[defaultVal]
         end
         local handle
-        handle = sec:Dropdown({
+        handle = target:Dropdown({
             Title = title,
             Desc = desc,
             Values = rawItems,
@@ -203,6 +213,7 @@ local function adaptSection(sec)
         return handle
     end
     function sec:AddSlider(opts, arg2, arg3, arg4, arg5)
+        local target = getSec()
         local title, desc, minVal, maxVal, defaultVal, callback, rounding
         if type(opts) == "string" then
             title = opts
@@ -224,7 +235,7 @@ local function adaptSection(sec)
         end
         local step = rounding > 0 and (1 / (10^rounding)) or 1
         local handle
-        handle = sec:Slider({
+        handle = target:Slider({
             Title = title,
             Desc = desc,
             Step = step,
@@ -255,6 +266,7 @@ local function adaptSection(sec)
         return handle
     end
     function sec:AddInput(opts, arg2, arg3)
+        local target = getSec()
         local title, desc, defaultVal, placeholder, callback
         if type(opts) == "string" then
             title = opts
@@ -271,7 +283,7 @@ local function adaptSection(sec)
             title, defaultVal, placeholder, callback = "Input", "", "Type here...", function() end
         end
         local handle
-        handle = sec:Input({
+        handle = target:Input({
             Title = title,
             Desc = desc,
             Value = defaultVal,
@@ -298,6 +310,7 @@ local function adaptSection(sec)
         return handle
     end
     function sec:AddButton(opts, arg2)
+        local target = getSec()
         local title, desc, callback
         if type(opts) == "string" then
             title = opts
@@ -309,7 +322,7 @@ local function adaptSection(sec)
         else
             title, callback = "Button", function() end
         end
-        local handle = sec:Button({
+        local handle = target:Button({
             Title = title,
             Desc = desc,
             Callback = callback
@@ -317,6 +330,7 @@ local function adaptSection(sec)
         return handle
     end
     function sec:AddParagraph(opts, arg2)
+        local target = getSec()
         local title, content
         if type(opts) == "string" then
             title = opts
@@ -327,7 +341,7 @@ local function adaptSection(sec)
         else
             title, content = "", ""
         end
-        local handle = sec:Paragraph({
+        local handle = target:Paragraph({
             Title = title,
             Desc = content
         })
@@ -357,8 +371,9 @@ local function adaptSection(sec)
         return handle
     end
     function sec:AddSeperator(opts)
-        if sec.Divider then
-            return sec:Divider()
+        local target = getSec()
+        if target.Divider then
+            return target:Divider()
         end
     end
     return sec
@@ -377,54 +392,54 @@ local Tabs = {
     Misc = UtilitiesGroup:Tab({ Title = "Misc & Settings", Icon = "sliders-horizontal" }),
     Webhook = UtilitiesGroup:Tab({ Title = "Server & Webhook", Icon = "globe" }),
 }
-Infr = adaptSection(Tabs.Info:Section({ Title = "Information & Status", Opened = true }))
-AutoFishing = adaptSection(Tabs.Main:Section({ Title = "Auto Fishing", Opened = true }))
-autoFishSettings = adaptSection(Tabs.Main:Section({ Title = "Fishing Delays", Opened = true }))
-FishingZone = adaptSection(Tabs.Main:Section({ Title = "Zone & Teleport", Opened = true }))
-AutoFish = adaptSection(Tabs.Main:Section({ Title = "Instant & Metronome", Opened = true }))
-SnapReelSection = adaptSection(Tabs.Main:Section({ Title = "Snap Reel (Filter Catch)", Opened = true }))
-SpearSection = adaptSection(Tabs.Main:Section({ Title = "Spear Fishing", Opened = true }))
-RodShop = adaptSection(Tabs.Shop:Section({ Title = "Equipment & Bait Shop", Opened = true }))
+Infr = adaptSection(Tabs.Info, "Information & Status")
+AutoFishing = adaptSection(Tabs.Main, "Auto Fishing")
+autoFishSettings = adaptSection(Tabs.Main, "Fishing Delays")
+FishingZone = adaptSection(Tabs.Main, "Zone & Teleport")
+AutoFish = adaptSection(Tabs.Main, "Instant & Metronome")
+SnapReelSection = adaptSection(Tabs.Main, "Snap Reel (Filter Catch)")
+SpearSection = adaptSection(Tabs.Main, "Spear Fishing")
+RodShop = adaptSection(Tabs.Shop, "Equipment & Bait Shop")
 BaitShop = RodShop
-ItemsShop = adaptSection(Tabs.Shop:Section({ Title = "Items & Totems Shop", Opened = true }))
+ItemsShop = adaptSection(Tabs.Shop, "Items & Totems Shop")
 TotemSection = ItemsShop
 MerlinShop = ItemsShop
-BlackMarketSection = adaptSection(Tabs.Shop:Section({ Title = "Black Market & Daily Shop", Opened = true }))
+BlackMarketSection = adaptSection(Tabs.Shop, "Black Market & Daily Shop")
 DailyShopSection = BlackMarketSection
-Selling = adaptSection(Tabs.Shop:Section({ Title = "Auto Selling", Opened = true }))
-BoatShop = adaptSection(Tabs.Shop:Section({ Title = "Boat Merchant", Opened = true }))
-AutoTab = adaptSection(Tabs.Auto:Section({ Title = "Fish Appraising", Opened = true }))
+Selling = adaptSection(Tabs.Shop, "Auto Selling")
+BoatShop = adaptSection(Tabs.Shop, "Boat Merchant")
+AutoTab = adaptSection(Tabs.Auto, "Fish Appraising")
 TreasureApp = AutoTab
-Ench = adaptSection(Tabs.Auto:Section({ Title = "Enchants & Relics", Opened = true }))
+Ench = adaptSection(Tabs.Auto, "Enchants & Relics")
 OpenCrate = Ench
-Totem = adaptSection(Tabs.Auto:Section({ Title = "Totems, Potions & Summon", Opened = true }))
+Totem = adaptSection(Tabs.Auto, "Totems, Potions & Summon")
 AutoPotionSection = Totem
 AutoSummonSection = Totem
-FoodSection = adaptSection(Tabs.Auto:Section({ Title = "Aquarium & Favoriting", Opened = true }))
+FoodSection = adaptSection(Tabs.Auto, "Aquarium & Favoriting")
 Favoriteee = FoodSection
-TreasureMarrow = adaptSection(Tabs.Auto:Section({ Title = "Treasure & Minigames", Opened = true }))
+TreasureMarrow = adaptSection(Tabs.Auto, "Treasure & Minigames")
 MineSection = TreasureMarrow
 CrabCages = TreasureMarrow
 FischFestSection = TreasureMarrow
-Quest = adaptSection(Tabs.Auto:Section({ Title = "Quests & Secrets", Opened = true }))
-TradeFeature = adaptSection(Tabs.Trade:Section({ Title = "Trade Features", Opened = true }))
-TeleportSection = adaptSection(Tabs.Teleports:Section({ Title = "World & Fishing Areas", Opened = true }))
+Quest = adaptSection(Tabs.Auto, "Quests & Secrets")
+TradeFeature = adaptSection(Tabs.Trade, "Trade Features")
+TeleportSection = adaptSection(Tabs.Teleports, "World & Fishing Areas")
 BestSpot = TeleportSection
-NPC = adaptSection(Tabs.Teleports:Section({ Title = "NPCs & Interactables", Opened = true }))
+NPC = adaptSection(Tabs.Teleports, "NPCs & Interactables")
 Int = NPC
-PlayerTeleport = adaptSection(Tabs.Teleports:Section({ Title = "Player Teleport", Opened = true }))
-SavePosition = adaptSection(Tabs.Teleports:Section({ Title = "Custom Waypoints", Opened = true }))
-OTHER = adaptSection(Tabs.Teleports:Section({ Title = "Special & Coordinates", Opened = true }))
-ESPFeature = adaptSection(Tabs.Exclusives:Section({ Title = "ESP Visuals", Opened = true }))
-EventHuntSection = adaptSection(Tabs.Exclusives:Section({ Title = "Event Boss Hunting", Opened = true }))
-Other = adaptSection(Tabs.Misc:Section({ Title = "Player Modifications", Opened = true }))
+PlayerTeleport = adaptSection(Tabs.Teleports, "Player Teleport")
+SavePosition = adaptSection(Tabs.Teleports, "Custom Waypoints")
+OTHER = adaptSection(Tabs.Teleports, "Special & Coordinates")
+ESPFeature = adaptSection(Tabs.Exclusives, "ESP Visuals")
+EventHuntSection = adaptSection(Tabs.Exclusives, "Event Boss Hunting")
+Other = adaptSection(Tabs.Misc, "Player Modifications")
 Oxygen = Other
-AutoBoatSection = adaptSection(Tabs.Misc:Section({ Title = "Boat & Vehicles", Opened = true }))
-Misc = adaptSection(Tabs.Misc:Section({ Title = "Environment & Graphics", Opened = true }))
+AutoBoatSection = adaptSection(Tabs.Misc, "Boat & Vehicles")
+Misc = adaptSection(Tabs.Misc, "Environment & Graphics")
 Screen = Misc
-SaveConfig2 = adaptSection(Tabs.Misc:Section({ Title = "Configuration", Opened = true }))
-ServerSection = adaptSection(Tabs.Webhook:Section({ Title = "Server Management", Opened = true }))
-WebhookSection = adaptSection(Tabs.Webhook:Section({ Title = "Fish Caught Webhook", Opened = true }))
+SaveConfig2 = adaptSection(Tabs.Misc, "Configuration")
+ServerSection = adaptSection(Tabs.Webhook, "Server Management")
+WebhookSection = adaptSection(Tabs.Webhook, "Fish Caught Webhook")
 JoinJob = ServerSection
 Server = ServerSection
 Caught = WebhookSection
