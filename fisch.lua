@@ -24,12 +24,18 @@ function Window:Notify(cfg)
 end
 local function adaptSection(tab, sectionTitle)
     local sec = {}
-    local realSec = nil
+    local headerAdded = false
     local function getSec()
-        if not realSec then
-            realSec = tab:Section({ Title = sectionTitle, Opened = true })
+        if not headerAdded then
+            headerAdded = true
+            if sectionTitle and sectionTitle ~= "" then
+                pcall(function()
+                    if tab.Divider then tab:Divider() end
+                    tab:Paragraph({ Title = sectionTitle, Desc = "" })
+                end)
+            end
         end
-        return realSec
+        return tab
     end
     function sec:AddToggle(opts, arg2, arg3, arg4)
         local target = getSec()
