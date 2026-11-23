@@ -2579,15 +2579,25 @@ function showAllFishPrice()
         end
     end
 end
-game:GetService("Players").LocalPlayer.PlayerGui.backpack.inventory.scroll.ChildAdded
-:Connect(function(v)
-    task.wait()
-    applyFishPriceToItem(v)
-end)
-game:GetService("Players").LocalPlayer.PlayerGui.backpack.hotbar.ChildAdded
-:Connect(function(v)
-    task.wait()
-    applyFishPriceToItem(v)
+task.spawn(function()
+    pcall(function()
+        local bpGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui", 15):WaitForChild("backpack", 15)
+        if not bpGui then return end
+        local invScroll = bpGui:FindFirstChild("inventory") and bpGui.inventory:FindFirstChild("scroll")
+        if invScroll then
+            invScroll.ChildAdded:Connect(function(v)
+                task.wait()
+                applyFishPriceToItem(v)
+            end)
+        end
+        local hotbarGui = bpGui:FindFirstChild("hotbar")
+        if hotbarGui then
+            hotbarGui.ChildAdded:Connect(function(v)
+                task.wait()
+                applyFishPriceToItem(v)
+            end)
+        end
+    end)
 end)
 function hideFishRarity()
     hotbar =
@@ -2834,13 +2844,11 @@ function TeleportToNPC()
     end
     warn("NPC tidak ditemukan: ", Value)
 end
-if not Interact then
-    warn("Folder NPC tidak ditemukan!")
-    return
-end
-for _, v in pairs(Interact:GetChildren()) do
-    if v:IsA("Model") or v:IsA("Part") then
-        table.insert(_sX.teleportInteract, v.Name)
+if Interact then
+    for _, v in pairs(Interact:GetChildren()) do
+        if v:IsA("Model") or v:IsA("Part") then
+            table.insert(_sX.teleportInteract, v.Name)
+        end
     end
 end
 table.sort(_sX.teleportInteract, function(a, b)
@@ -3303,42 +3311,44 @@ _G.CustomBarSize = _G.CustomBarSize or 1
 _G.FastProgressSpeed = _G.FastProgressSpeed or 50
 _G.FishMoveInterval = _G.FishMoveInterval or 1
 ReplicatedStorage = game:GetService("ReplicatedStorage")
-ReelController = require(ReplicatedStorage.client.legacyControllers.ReelController)
-if not _G._OriginalFischReelNew then
-    _G._OriginalFischReelNew = ReelController.new
-end
-ReelController.new = function(...)
-    local instance = _G._OriginalFischReelNew(...)
-    if instance and typeof(instance) == "table" then
-        local rawUpdate = instance.Update
-        instance.Update = function(self, deltaTime)
-            local result = rawUpdate(self, deltaTime)
-            if _G.CustomBarEnabled and not self._noCustomBar then
-                local size = tonumber(_G.CustomBarSize)
-                if size and size > 0 then
-                    self.barSize = size
-                    if size >= 1 then
-                        self.barPosition = 0.5
-                    else
-                        local minPos = (self.minBarPosition or 0) + size / 2
-                        local maxPos = (self.maxBarPosition or 1) - size / 2
-                        self.barPosition = math.clamp(self.barPosition or 0.5, minPos, maxPos)
+pcall(function()
+    ReelController = require(ReplicatedStorage.client.legacyControllers.ReelController)
+    if not _G._OriginalFischReelNew then
+        _G._OriginalFischReelNew = ReelController.new
+    end
+    ReelController.new = function(...)
+        local instance = _G._OriginalFischReelNew(...)
+        if instance and typeof(instance) == "table" then
+            local rawUpdate = instance.Update
+            instance.Update = function(self, deltaTime)
+                local result = rawUpdate(self, deltaTime)
+                if _G.CustomBarEnabled and not self._noCustomBar then
+                    local size = tonumber(_G.CustomBarSize)
+                    if size and size > 0 then
+                        self.barSize = size
+                        if size >= 1 then
+                            self.barPosition = 0.5
+                        else
+                            local minPos = (self.minBarPosition or 0) + size / 2
+                            local maxPos = (self.maxBarPosition or 1) - size / 2
+                            self.barPosition = math.clamp(self.barPosition or 0.5, minPos, maxPos)
+                        end
                     end
                 end
+                if _G.FollowBarEnabled and not _G.FastReelEnabled and not (_G.CustomBarEnabled and not self._noCustomBar and (tonumber(_G.CustomBarSize) or 0) >= 1) then
+                    self.barPosition = self.fishPosition
+                end
+                if _G.FastReelEnabled then
+                    self.progress = 100
+                elseif _G.FastProgressEnabled then
+                    self:AddProgress((_G.FastProgressSpeed or 50) * deltaTime)
+                end
+                return result
             end
-            if _G.FollowBarEnabled and not _G.FastReelEnabled and not (_G.CustomBarEnabled and not self._noCustomBar and (tonumber(_G.CustomBarSize) or 0) >= 1) then
-                self.barPosition = self.fishPosition
-            end
-            if _G.FastReelEnabled then
-                self.progress = 100
-            elseif _G.FastProgressEnabled then
-                self:AddProgress((_G.FastProgressSpeed or 50) * deltaTime)
-            end
-            return result
         end
+        return instance
     end
-    return instance
-end
+end)
 _G.FastReelEnabled = false
 finishing = false
 local lastFinishedReel = nil
@@ -5884,9 +5894,9 @@ function getFishTools()
 end
 targetFav = {}
 AutoFavorite = false
-updateRemote = ReplicatedStorage:WaitForChild("packages")
-:WaitForChild("Net")
-:WaitForChild("RE/Settings/Edit")
+local _pkg5887 = ReplicatedStorage:WaitForChild("packages", 5)
+local _net5887 = _pkg5887 and _pkg5887:WaitForChild("Net", 5)
+updateRemote = _net5887 and _net5887:WaitForChild("RE/Settings/Edit", 5)
 rarities = {
     "Unusual","Mythical","Special","Limited","Rare","Fragment","Gemstone",
     "Trash","Common","Uncommon","Secret","Extinct","Legendary","Relic",
@@ -7248,8 +7258,8 @@ table.sort(appraiseOptions, function(a, b)
     return string.lower(a) < string.lower(b)
 end)
 local player = game.Players.LocalPlayer
-local Net = ReplicatedStorage:WaitForChild("packages"):WaitForChild("Net")
-local DialogInteract = Net:WaitForChild("RF/DialogInteract")
+local Net = ReplicatedStorage:WaitForChild("packages", 5) and ReplicatedStorage.packages:WaitForChild("Net", 5)
+local DialogInteract = Net and Net:WaitForChild("RF/DialogInteract", 5)
 Appraise = false
 selectAppraise = {}
 selectAppraise1 = {}
@@ -8949,9 +8959,8 @@ RunService.Heartbeat:Connect(function()
     watchFishingZoneForESP()
     updateESP()
 end)
-local ZonesFolder =
-Workspace:WaitForChild("zones")
-:WaitForChild("fishing")
+local _zonesRoot = Workspace:WaitForChild("zones", 5)
+local ZonesFolder = _zonesRoot and _zonesRoot:WaitForChild("fishing", 5)
 local AreaESPFolder = Instance.new("Folder")
 AreaESPFolder.Name = "ThanHub_AreaESP"
 AreaESPFolder.Parent = Workspace
